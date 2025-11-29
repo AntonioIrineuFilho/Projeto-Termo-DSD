@@ -1,0 +1,1 @@
+words = ["CASA", "MESA", "FITA", "PATO", "LUVA"]
