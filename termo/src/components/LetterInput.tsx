@@ -31,7 +31,6 @@ export default function LetterInput({
   return (
     <input
       id={`letter-${position}`}
-      // Responsivo por breakpoint, mas não expandir: caixas têm largura fixa
       className={
         "w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-[72px] lg:h-[72px] shrink-0 border border-gray-300 rounded-md text-center font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 text-[20px] sm:text-2xl md:text-[28px] lg:text-[32px]"
       }

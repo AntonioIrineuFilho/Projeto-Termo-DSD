@@ -1,5 +1,6 @@
 import { Button, Input } from "rsuite";
 import type { TRoomStatus } from "../types/TRoomStatus";
+import { Check } from "lucide-react";
 
 interface IRoomCardProps {
   players: {
@@ -16,13 +17,9 @@ export default function RoomCard({
   roomCode,
   status,
 }: IRoomCardProps) {
-  const onEnterRoom = () => {
-    // Logic to enter the room
-  };
+  const onEnterRoom = () => {};
 
-  const onSubmitPassword = () => {
-    // Logic to submit the password
-  };
+  const onSubmitPassword = () => {};
 
   return (
     <div className="w-60 h-60 bg-slate-100 rounded border-[#cacaca7c] border p-2 flex flex-col justify-between px-6 gap-2">
@@ -64,10 +61,16 @@ export default function RoomCard({
       </div>
 
       {isPrivate ? (
-        <label>
-          Senha:
-          <Input type="text" />
-        </label>
+        <div className="flex items-end gap-1">
+          <label>
+            Senha:
+            <Input type="text" />
+          </label>
+
+          <Button appearance="ghost" onClick={onSubmitPassword}>
+            <Check />
+          </Button>
+        </div>
       ) : (
         <Button appearance="primary" block>
           Entrar na Sala

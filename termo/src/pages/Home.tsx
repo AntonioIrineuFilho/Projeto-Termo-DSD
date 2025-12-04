@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div className="h-full flex flex-col gap-4">
       <header className="bg-slate-100 p-6 border-b-[#cacaca7c] border-b-2">
-        <p className="text-xl font-bold text-center">Termo Multiplayer</p>
+        <p className="text-xl font-bold text-center">Termo Arena</p>
       </header>
 
       <div className="px-5 flex gap-4 items-end">
