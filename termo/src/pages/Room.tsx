@@ -1,12 +1,14 @@
 import { ChevronLeftCircle, Delete } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { Button } from "rsuite";
 import LetterInput from "../components/LetterInput";
 import type { TLetters } from "../types/TLetters";
 import KeyButton from "../components/KeyButton";
+import { usePlayerContext } from "../context/PlayerContext";
 
 export default function Room() {
+  const { name, roomCode } = usePlayerContext();
   const { id } = useParams<{ id: string }>();
 
   const inputRefs = useRef<Array<HTMLInputElement>>([]);
@@ -56,6 +58,10 @@ export default function Room() {
   };
 
   const [keyboard, setKeyboard] = useState<IKeyboard>(defaultKeyboard);
+
+  const ws = new WebSocket(import.meta.env.VITE_WS_URL);
+
+  useEffect(() => {}, [name, roomCode]);
 
   const handleChangeLetter = (position: number, letter: string) => {
     setLetters((prevLetters) => ({

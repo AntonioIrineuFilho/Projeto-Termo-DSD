@@ -31,6 +31,10 @@ class RoomController {
 
     const roomData = await redis.get(`room:${roomCode}`);
 
+    if (!name || name.trim().length === 0) {
+      return res.status(400).json({ message: "Nome de usuário é obrigatório" });
+    }
+
     if (!roomData) {
       return res.status(404).send();
     }

@@ -2,7 +2,8 @@ import { Button, Input, Message, useToaster } from "rsuite";
 import type { TRoomStatus } from "../types/TRoomStatus";
 import { Check } from "lucide-react";
 import { useState } from "react";
-import axios from "axios";
+import { AxiosError } from "axios";
+import { usePlayerContext } from "../context/PlayerContext";
 
 interface IRoomCardProps {
   players: {
@@ -20,31 +21,48 @@ export default function RoomCard({
   status,
 }: IRoomCardProps) {
   const toaster = useToaster();
+  const { enterRoom } = usePlayerContext();
 
   const [password, setPassword] = useState<string>("");
   const [username, setUsername] = useState<string>("");
 
-  const onEnterRoom = () => {};
-
-  const onSubmitPassword = async () => {
+  const onEnterRoom = async () => {
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/room/join/${roomCode}`,
-        {
-          name: username,
-          password,
+      await enterRoom(roomCode, username, password);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (error.response?.status === 401) {
+          toaster.push(
+            <Message showIcon type="error">
+              Senha incorreta
+            </Message>,
+            {
+              placement: "topCenter",
+              duration: 5000,
+            }
+          );
+        } else if (error.response?.status === 400) {
+          toaster.push(
+            <Message showIcon type="error">
+              Nome de usuário é obrigatório
+            </Message>,
+            {
+              placement: "topCenter",
+              duration: 5000,
+            }
+          );
+        } else {
+          toaster.push(
+            <Message showIcon type="error">
+              Erro ao entrar na sala
+            </Message>,
+            {
+              placement: "topCenter",
+              duration: 5000,
+            }
+          );
         }
-      );
-    } catch {
-      toaster.push(
-        <Message showIcon type="error">
-          Senha incorreta
-        </Message>,
-        {
-          placement: "topCenter",
-          duration: 5000,
-        }
-      );
+      }
     }
   };
 
@@ -87,7 +105,7 @@ export default function RoomCard({
         </ul>
       </div>
 
-      {isPrivate ? (
+      {status === "Em andamento" ? null : isPrivate ? (
         <div className="flex items-end gap-1">
           <div className="flex flex-col gap-1">
             <label>
@@ -101,14 +119,21 @@ export default function RoomCard({
             </label>
           </div>
 
-          <Button appearance="ghost" onClick={onSubmitPassword}>
+          <Button appearance="ghost" onClick={onEnterRoom}>
             <Check />
           </Button>
         </div>
       ) : (
-        <Button appearance="primary" block onClick={onEnterRoom}>
-          Entrar na Sala
-        </Button>
+        <div className="flex flex-col gap-2">
+          <label>
+            Usuário:
+            <Input type="text" value={username} onChange={setUsername} />
+          </label>
+
+          <Button appearance="primary" block onClick={onEnterRoom}>
+            Entrar na Sala
+          </Button>
+        </div>
       )}
     </div>
   );

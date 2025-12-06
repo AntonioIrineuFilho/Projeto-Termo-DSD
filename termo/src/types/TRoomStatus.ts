@@ -1,1 +1,1 @@
-export type TRoomStatus = "Aguardando" | "Em Progresso" | "Finalizado";
+export type TRoomStatus = "Aguardando" | "Em andamento" | "Finalizado";

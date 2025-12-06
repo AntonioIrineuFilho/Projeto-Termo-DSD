@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useState } from "react";
-import { Button, Form, Modal, useToaster } from "rsuite";
+import { Button, Form, Message, Modal, useToaster } from "rsuite";
 
 export default function CreateRoomModal() {
   const toaster = useToaster();
@@ -24,13 +24,26 @@ export default function CreateRoomModal() {
   };
 
   const handleSubmit = async () => {
-    const res = await axios.post(
-      `${import.meta.env.VITE_API_URL}/room/create`,
-      {
-        name: formValue.username,
-        password: formValue.password,
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/room/create`,
+        {
+          name: formValue.username,
+          password: formValue.password,
+        }
+      );
+
+      if (res.status === 201) {
+        window.location.href = `/room/${res.data.roomCode}`;
       }
-    );
+    } catch {
+      handleClose();
+
+      toaster.push(<Message type="error">Erro ao criar a sala</Message>, {
+        placement: "topCenter",
+        duration: 5000,
+      });
+    }
   };
 
   return (

@@ -6,16 +6,19 @@ import "rsuite/dist/rsuite.css";
 import { BrowserRouter, Route, Routes } from "react-router";
 import Room from "./pages/Room";
 import { CustomProvider } from "rsuite";
+import { PlayerProvider } from "./context/PlayerContext";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <CustomProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/room/:id" element={<Room />} />
-        </Routes>
-      </BrowserRouter>
-    </CustomProvider>
+    <PlayerProvider>
+      <CustomProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/room/:id" element={<Room />} />
+          </Routes>
+        </BrowserRouter>
+      </CustomProvider>
+    </PlayerProvider>
   </StrictMode>
 );
