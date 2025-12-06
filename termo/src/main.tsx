@@ -5,14 +5,17 @@ import Home from "./pages/Home";
 import "rsuite/dist/rsuite.css";
 import { BrowserRouter, Route, Routes } from "react-router";
 import Room from "./pages/Room";
+import { CustomProvider } from "rsuite";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/room/:id" element={<Room />} />
-      </Routes>
-    </BrowserRouter>
+    <CustomProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/room/:id" element={<Room />} />
+        </Routes>
+      </BrowserRouter>
+    </CustomProvider>
   </StrictMode>
 );

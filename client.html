@@ -1,230 +1,305 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Termo Multiplayer</title>
-  <style>
-    body { font-family: system-ui, Arial; max-width: 720px; margin: 24px auto; padding: 0 12px; color: #111; }
-    h1 { margin-bottom: 6px; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
-    input[type="text"] { padding: 8px; font-size: 14px; width: 240px; }
-    button { padding: 8px 12px; margin-left: 6px; cursor: pointer; }
-    #log { height: 220px; overflow:auto; background:#111; color:#0f0; padding:10px; border-radius:6px; font-family: monospace; white-space: pre-wrap; }
-    .inline { display:flex; align-items:center; gap:8px; }
-    .small { font-size: 13px; color:#666; }
-    .badge { background:#f0f0f0; padding:4px 8px; border-radius:6px; font-weight:600; }
-  </style>
-</head>
-<body>
-  <h1>Termo</h1>
-
-  <div class="card">
-    <div class="inline">
-      <div>
-        <button id="btnCreate">Criar Sala</button>
-        <span class="small"> (gera um código que o outro jogador usa)</span>
-      </div>
-      <div style="margin-left:auto">
-        <span class="small">Seu ID:</span>
-        <span id="playerId" class="badge"></span>
-      </div>
-    </div>
-
-    <p id="createdInfo" class="small" style="margin-top:8px"></p>
-  </div>
-
-  <div class="card">
-    <div class="inline">
-      <input id="roomInput" type="text" placeholder="Código da sala (ex: A1B2)" />
-      <button id="btnJoin">Entrar</button>
-      <span class="small" style="margin-left:8px">ou cole o código que recebeu</span>
-    </div>
-    <p id="joinedInfo" class="small" style="margin-top:8px"></p>
-  </div>
-
-  <div class="card">
-    <div class="inline">
-      <input id="guessInput" type="text" placeholder="Digite sua palavra" maxlength="8" />
-      <button id="btnSend">Enviar</button>
-      <button id="btnClose" style="margin-left:8px">Sair</button>
-    </div>
-    <p id="status" class="small" style="margin-top:8px">Status: <span id="statusText">desconectado</span></p>
-  </div>
-
-  <div class="card">
-    <div class="small" style="margin-bottom:6px">Log (mensagens do servidor)</div>
-    <pre id="log"></pre>
-  </div>
-
-  <script>
-    // ------- CONFIGURE AQUI: substitua pelo IP da sua máquina na rede ----------
-    const HOST = "192.168.X.X"; // <- troque para o seu IP, ex: "192.168.0.14"
-    const HTTP_BASE = `http://${HOST}:8000`;
-    const WS_BASE = `ws://${HOST}:8000/ws`;
-    // ------------------------------------------------------------------------
-
-    // elementos
-    const btnCreate = document.getElementById("btnCreate");
-    const createdInfo = document.getElementById("createdInfo");
-    const btnJoin = document.getElementById("btnJoin");
-    const roomInput = document.getElementById("roomInput");
-    const joinedInfo = document.getElementById("joinedInfo");
-    const guessInput = document.getElementById("guessInput");
-    const btnSend = document.getElementById("btnSend");
-    const logEl = document.getElementById("log");
-    const statusText = document.getElementById("statusText");
-    const playerIdEl = document.getElementById("playerId");
-    const btnClose = document.getElementById("btnClose");
-
-    // estado
-    let ws = null;
-    let currentRoom = null;
-
-    // -------- playerId persistente ----------
-    let playerId = localStorage.getItem("playerId");
-    if (!playerId) {
-      playerId = Math.random().toString(36).substring(2, 10);
-      localStorage.setItem("playerId", playerId);
-    }
-    playerIdEl.textContent = playerId;
-
-    function log(msg) {
-      const now = new Date().toLocaleTimeString();
-      logEl.textContent += `[${now}] ${msg}\n`;
-      logEl.scrollTop = logEl.scrollHeight;
-    }
-
-    function setStatus(s) {
-      statusText.textContent = s;
-    }
-
-    // fechar ws atual de forma segura
-    function closeWs() {
-      if (ws) {
-        try { ws.close(); } catch(e) {}
-        ws = null;
-        setStatus("desconectado");
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Termo Multiplayer</title>
+    <style>
+      body {
+        font-family: system-ui, Arial;
+        max-width: 720px;
+        margin: 24px auto;
+        padding: 0 12px;
+        color: #111;
       }
-    }
-
-    // cria sala pedindo ao backend
-    btnCreate.addEventListener("click", async () => {
-      try {
-        const res = await fetch(`${HTTP_BASE}/create-room`, { method: "POST" });
-        if (!res.ok) throw new Error("Erro criando sala");
-        const data = await res.json();
-        createdInfo.textContent = `Código da sala: ${data.room}`;
-        roomInput.value = data.room;
-        log(`Sala criada: ${data.room}`);
-      } catch (err) {
-        log("Erro ao criar sala: " + err.message);
+      h1 {
+        margin-bottom: 6px;
       }
-    });
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      }
+      input[type="text"] {
+        padding: 8px;
+        font-size: 14px;
+        width: 240px;
+      }
+      button {
+        padding: 8px 12px;
+        margin-left: 6px;
+        cursor: pointer;
+      }
+      #log {
+        height: 220px;
+        overflow: auto;
+        background: #111;
+        color: #0f0;
+        padding: 10px;
+        border-radius: 6px;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+      .inline {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .small {
+        font-size: 13px;
+        color: #666;
+      }
+      .badge {
+        background: #f0f0f0;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Termo</h1>
 
-    // conectar-se à sala via WebSocket e enviar JOIN
-    btnJoin.addEventListener("click", () => {
-      const room = roomInput.value.trim().toUpperCase();
-      if (!room) { alert("Digite um código."); return; }
-      connectToRoom(room);
-    });
+    <div class="card">
+      <div class="inline">
+        <div>
+          <button id="btnCreate">Criar Sala</button>
+          <span class="small"> (gera um código que o outro jogador usa)</span>
+        </div>
+        <div style="margin-left: auto">
+          <span class="small">Seu ID:</span>
+          <span id="playerId" class="badge"></span>
+        </div>
+      </div>
 
-    // conectar (cria o websocket e manda a mensagem de join)
-    function connectToRoom(room) {
-      // fecha antiga, se existir
-      closeWs();
+      <p id="createdInfo" class="small" style="margin-top: 8px"></p>
+    </div>
 
-      ws = new WebSocket(WS_BASE);
-      currentRoom = room;
+    <div class="card">
+      <div class="inline">
+        <input
+          id="roomInput"
+          type="text"
+          placeholder="Código da sala (ex: A1B2)"
+        />
+        <button id="btnJoin">Entrar</button>
+        <span class="small" style="margin-left: 8px"
+          >ou cole o código que recebeu</span
+        >
+      </div>
+      <p id="joinedInfo" class="small" style="margin-top: 8px"></p>
+    </div>
 
-      ws.addEventListener("open", () => {
-        setStatus(`conectado (sala ${room})`);
-        joinedInfo.textContent = `Conectado à sala: ${room}`;
-        // manda JOIN com player_id
-        ws.send(JSON.stringify({
-          type: "join",
-          room: room,
-          player_id: playerId
-        }));
-        log(`Conectado ao servidor e solicitei entrada na sala ${room} (player ${playerId})`);
-      });
+    <div class="card">
+      <div class="inline">
+        <input
+          id="guessInput"
+          type="text"
+          placeholder="Digite sua palavra"
+          maxlength="8"
+        />
+        <button id="btnSend">Enviar</button>
+        <button id="btnClose" style="margin-left: 8px">Sair</button>
+      </div>
+      <p id="status" class="small" style="margin-top: 8px">
+        Status: <span id="statusText">desconectado</span>
+      </p>
+    </div>
 
-      ws.addEventListener("message", (ev) => {
+    <div class="card">
+      <div class="small" style="margin-bottom: 6px">
+        Log (mensagens do servidor)
+      </div>
+      <pre id="log"></pre>
+    </div>
+
+    <script>
+      // ------- CONFIGURE AQUI: substitua pelo IP da sua máquina na rede ----------
+      const HOST = "localhost"; // <- troque para o seu IP, ex: "192.168.0.14"
+      const HTTP_BASE = `http://${HOST}:8000`;
+      const WS_BASE = `ws://${HOST}:8000/ws`;
+      // ------------------------------------------------------------------------
+
+      // elementos
+      const btnCreate = document.getElementById("btnCreate");
+      const createdInfo = document.getElementById("createdInfo");
+      const btnJoin = document.getElementById("btnJoin");
+      const roomInput = document.getElementById("roomInput");
+      const joinedInfo = document.getElementById("joinedInfo");
+      const guessInput = document.getElementById("guessInput");
+      const btnSend = document.getElementById("btnSend");
+      const logEl = document.getElementById("log");
+      const statusText = document.getElementById("statusText");
+      const playerIdEl = document.getElementById("playerId");
+      const btnClose = document.getElementById("btnClose");
+
+      // estado
+      let ws = null;
+      let currentRoom = null;
+
+      // -------- playerId persistente ----------
+      let playerId = localStorage.getItem("playerId");
+      if (!playerId) {
+        playerId = Math.random().toString(36).substring(2, 10);
+        localStorage.setItem("playerId", playerId);
+      }
+      playerIdEl.textContent = playerId;
+
+      function log(msg) {
+        const now = new Date().toLocaleTimeString();
+        logEl.textContent += `[${now}] ${msg}\n`;
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function setStatus(s) {
+        statusText.textContent = s;
+      }
+
+      // fechar ws atual de forma segura
+      function closeWs() {
+        if (ws) {
+          try {
+            ws.close();
+          } catch (e) {}
+          ws = null;
+          setStatus("desconectado");
+        }
+      }
+
+      // cria sala pedindo ao backend
+      btnCreate.addEventListener("click", async () => {
         try {
-          const data = JSON.parse(ev.data);
-          handleServerMessage(data);
-        } catch (e) {
-          log("Mensagem inválida: " + ev.data);
+          const res = await fetch(`${HTTP_BASE}/create-room`, {
+            method: "POST",
+          });
+          if (!res.ok) throw new Error("Erro criando sala");
+          const data = await res.json();
+          createdInfo.textContent = `Código da sala: ${data.room}`;
+          roomInput.value = data.room;
+          log(`Sala criada: ${data.room}`);
+        } catch (err) {
+          log("Erro ao criar sala: " + err.message);
         }
       });
 
-      ws.addEventListener("close", (ev) => {
-        setStatus("desconectado");
-        log("Conexão fechada.");
+      // conectar-se à sala via WebSocket e enviar JOIN
+      btnJoin.addEventListener("click", () => {
+        const room = roomInput.value.trim().toUpperCase();
+        if (!room) {
+          alert("Digite um código.");
+          return;
+        }
+        connectToRoom(room);
       });
 
-      ws.addEventListener("error", (ev) => {
-        setStatus("erro");
-        log("Erro na conexão WebSocket.");
-      });
-    }
-
-    // tratamento das mensagens recebidas
-    function handleServerMessage(data) {
-      if (!data || !data.type) return;
-      if (data.type === "error") {
-        alert("Servidor: " + (data.message || "erro"));
-        log("Erro do servidor: " + JSON.stringify(data));
-        return;
-      }
-      if (data.type === "start") {
-        log("Jogo iniciado! Palavra tem " + data.word_length + " letras");
-        return;
-      }
-      if (data.type === "guess") {
-        const who = data.player || "desconhecido";
-        log(`(${who}) → ${data.guess} => ${data.result.join(", ")}`);
-        return;
-      }
-      if (data.type === "win") {
-        log(`🏆 ${data.winner} venceu! Palavra: ${data.word}`);
-        return;
-      }
-      // mensagens extras
-      log("Recebido: " + JSON.stringify(data));
-    }
-
-    // enviar palpite
-    btnSend.addEventListener("click", () => {
-      const guess = guessInput.value.trim();
-      if (!guess) return;
-      if (!ws || ws.readyState !== WebSocket.OPEN) {
-        alert("Você não está conectado a uma sala.");
-        return;
-      }
-      ws.send(JSON.stringify({ type: "guess", guess: guess }));
-      guessInput.value = "";
-    });
-
-    // botão sair
-    btnClose.addEventListener("click", () => {
-      if (ws) {
-        try { ws.send(JSON.stringify({ type: "leave" })); } catch(e){}
+      // conectar (cria o websocket e manda a mensagem de join)
+      function connectToRoom(room) {
+        // fecha antiga, se existir
         closeWs();
-        joinedInfo.textContent = "";
-        createdInfo.textContent = "";
-        currentRoom = null;
+
+        ws = new WebSocket(WS_BASE);
+        currentRoom = room;
+
+        ws.addEventListener("open", () => {
+          setStatus(`conectado (sala ${room})`);
+          joinedInfo.textContent = `Conectado à sala: ${room}`;
+          // manda JOIN com player_id
+          ws.send(
+            JSON.stringify({
+              type: "join",
+              room: room,
+              player_id: playerId,
+            })
+          );
+          log(
+            `Conectado ao servidor e solicitei entrada na sala ${room} (player ${playerId})`
+          );
+        });
+
+        ws.addEventListener("message", (ev) => {
+          try {
+            const data = JSON.parse(ev.data);
+            handleServerMessage(data);
+          } catch (e) {
+            log("Mensagem inválida: " + ev.data);
+          }
+        });
+
+        ws.addEventListener("close", (ev) => {
+          setStatus("desconectado");
+          log("Conexão fechada.");
+        });
+
+        ws.addEventListener("error", (ev) => {
+          setStatus("erro");
+          log("Erro na conexão WebSocket.");
+        });
       }
-    });
 
-    // atalho: permitir Enter no campo de palpite
-    guessInput.addEventListener("keyup", (e) => {
-      if (e.key === "Enter") btnSend.click();
-    });
+      // tratamento das mensagens recebidas
+      function handleServerMessage(data) {
+        if (!data || !data.type) return;
+        if (data.type === "error") {
+          alert("Servidor: " + (data.message || "erro"));
+          log("Erro do servidor: " + JSON.stringify(data));
+          return;
+        }
+        if (data.type === "start") {
+          log("Jogo iniciado! Palavra tem " + data.word_length + " letras");
+          return;
+        }
+        if (data.type === "guess") {
+          const who = data.player || "desconhecido";
+          log(`(${who}) → ${data.guess} => ${data.result.join(", ")}`);
+          return;
+        }
+        if (data.type === "win") {
+          log(`🏆 ${data.winner} venceu! Palavra: ${data.word}`);
+          return;
+        }
+        // mensagens extras
+        log("Recebido: " + JSON.stringify(data));
+      }
 
-    // mostrar mensagens iniciais
-    log("Interface pronta. Troque HOST no topo do arquivo para o IP da máquina que roda o backend.");
-    log("Clique em 'Criar Sala' para gerar o código, copie-o e no outro dispositivo cole em 'Código da sala' e clique 'Entrar'.");
-  </script>
-</body>
+      // enviar palpite
+      btnSend.addEventListener("click", () => {
+        const guess = guessInput.value.trim();
+        if (!guess) return;
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          alert("Você não está conectado a uma sala.");
+          return;
+        }
+        ws.send(JSON.stringify({ type: "guess", guess: guess }));
+        guessInput.value = "";
+      });
+
+      // botão sair
+      btnClose.addEventListener("click", () => {
+        if (ws) {
+          try {
+            ws.send(JSON.stringify({ type: "leave" }));
+          } catch (e) {}
+          closeWs();
+          joinedInfo.textContent = "";
+          createdInfo.textContent = "";
+          currentRoom = null;
+        }
+      });
+
+      // atalho: permitir Enter no campo de palpite
+      guessInput.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") btnSend.click();
+      });
+
+      // mostrar mensagens iniciais
+      log(
+        "Interface pronta. Troque HOST no topo do arquivo para o IP da máquina que roda o backend."
+      );
+      log(
+        "Clique em 'Criar Sala' para gerar o código, copie-o e no outro dispositivo cole em 'Código da sala' e clique 'Entrar'."
+      );
+    </script>
+  </body>
 </html>

@@ -1,7 +1,10 @@
+import axios from "axios";
 import { useState } from "react";
-import { Button, Form, Modal } from "rsuite";
+import { Button, Form, Modal, useToaster } from "rsuite";
 
 export default function CreateRoomModal() {
+  const toaster = useToaster();
+
   const [open, setOpen] = useState(false);
   const [formValue, setFormValue] = useState({
     username: "",
@@ -20,8 +23,14 @@ export default function CreateRoomModal() {
     setOpen(true);
   };
 
-  const handleSubmit = () => {
-    console.log(formValue);
+  const handleSubmit = async () => {
+    const res = await axios.post(
+      `${import.meta.env.VITE_API_URL}/room/create`,
+      {
+        name: formValue.username,
+        password: formValue.password,
+      }
+    );
   };
 
   return (

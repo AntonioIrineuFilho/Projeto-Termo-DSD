@@ -1,6 +1,8 @@
-import { Button, Input } from "rsuite";
+import { Button, Input, Message, useToaster } from "rsuite";
 import type { TRoomStatus } from "../types/TRoomStatus";
 import { Check } from "lucide-react";
+import { useState } from "react";
+import axios from "axios";
 
 interface IRoomCardProps {
   players: {
@@ -17,12 +19,37 @@ export default function RoomCard({
   roomCode,
   status,
 }: IRoomCardProps) {
+  const toaster = useToaster();
+
+  const [password, setPassword] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
+
   const onEnterRoom = () => {};
 
-  const onSubmitPassword = () => {};
+  const onSubmitPassword = async () => {
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/room/join/${roomCode}`,
+        {
+          name: username,
+          password,
+        }
+      );
+    } catch {
+      toaster.push(
+        <Message showIcon type="error">
+          Senha incorreta
+        </Message>,
+        {
+          placement: "topCenter",
+          duration: 5000,
+        }
+      );
+    }
+  };
 
   return (
-    <div className="w-60 h-60 bg-slate-100 rounded border-[#cacaca7c] border p-2 flex flex-col justify-between px-6 gap-2">
+    <div className="w-60 h-80 bg-slate-100 rounded border-[#cacaca7c] border p-2 flex flex-col justify-between px-6 gap-2">
       <p>
         Sala #<b>{roomCode}</b>
       </p>
@@ -62,17 +89,24 @@ export default function RoomCard({
 
       {isPrivate ? (
         <div className="flex items-end gap-1">
-          <label>
-            Senha:
-            <Input type="text" />
-          </label>
+          <div className="flex flex-col gap-1">
+            <label>
+              Usuário:
+              <Input type="text" value={username} onChange={setUsername} />
+            </label>
+
+            <label>
+              Senha:
+              <Input type="text" value={password} onChange={setPassword} />
+            </label>
+          </div>
 
           <Button appearance="ghost" onClick={onSubmitPassword}>
             <Check />
           </Button>
         </div>
       ) : (
-        <Button appearance="primary" block>
+        <Button appearance="primary" block onClick={onEnterRoom}>
           Entrar na Sala
         </Button>
       )}
