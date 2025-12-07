@@ -1,0 +1,53 @@
+services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672" # Porta padrão do RabbitMQ
+      - "15672:15672" # Porta para o Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: "admin"
+      RABBITMQ_DEFAULT_PASS: "admin"
+    networks:
+      - default
+
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    networks:
+      - default
+  rest:
+    build: ./rest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - rabbitmq
+      - redis
+    networks:
+      - default
+
+  websocket:
+    build: ./websocket
+    ports:
+      - "3001:3001"
+    depends_on:
+      - rabbitmq
+      - redis
+    networks:
+      - default
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4173:4173"
+    depends_on:
+      - rabbitmq
+      - redis
+      - rest
+      - websocket
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
