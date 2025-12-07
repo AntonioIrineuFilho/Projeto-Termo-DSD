@@ -1,9 +1,10 @@
-import axios from "axios";
 import { useState } from "react";
 import { Button, Form, Message, Modal, useToaster } from "rsuite";
+import { usePlayerContext } from "../context/PlayerContext";
 
 export default function CreateRoomModal() {
   const toaster = useToaster();
+  const { createRoom } = usePlayerContext();
 
   const [open, setOpen] = useState(false);
   const [formValue, setFormValue] = useState({
@@ -25,17 +26,7 @@ export default function CreateRoomModal() {
 
   const handleSubmit = async () => {
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/room/create`,
-        {
-          name: formValue.username,
-          password: formValue.password,
-        }
-      );
-
-      if (res.status === 201) {
-        window.location.href = `/room/${res.data.roomCode}`;
-      }
+      await createRoom(formValue.username, formValue.password);
     } catch {
       handleClose();
 

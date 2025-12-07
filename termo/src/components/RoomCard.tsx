@@ -29,6 +29,7 @@ export default function RoomCard({
   const onEnterRoom = async () => {
     try {
       await enterRoom(roomCode, username, password);
+      window.location.href = `/room/${roomCode}`;
     } catch (error) {
       if (error instanceof AxiosError) {
         if (error.response?.status === 401) {

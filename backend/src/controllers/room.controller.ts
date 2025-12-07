@@ -53,6 +53,20 @@ class RoomController {
     return res.status(200).json({ message: "Entrou na sala com sucesso" });
   }
 
+  async deleteRoom(req: Request<{ roomCode: string }>, res: Response) {
+    const { roomCode } = req.params;
+
+    const roomData = await redis.get(`room:${roomCode}`);
+
+    if (!roomData) {
+      return res.status(404).send();
+    }
+
+    await redis.del(`room:${roomCode}`);
+
+    return res.status(200).json({ message: "Sala deletada com sucesso" });
+  }
+
   async getAllRooms(req: Request, res: Response) {
     const keys = await redis.keys("room:*");
     const rooms: IRoom[] = [];

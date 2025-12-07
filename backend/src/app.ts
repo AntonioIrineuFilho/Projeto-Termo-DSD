@@ -9,6 +9,7 @@ app.use(cors());
 
 app.post("/room/create", roomController.createRoom);
 app.post("/room/join/:roomCode", roomController.joinRoom);
+app.delete("/room/:roomCode", roomController.deleteRoom);
 app.get("/rooms", roomController.getAllRooms);
 
 export default app;

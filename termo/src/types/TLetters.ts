@@ -1,7 +1,8 @@
+import type { TLetterStatus } from "./TLetterStatus";
+
 export type TLetters = {
-  1: string;
-  2: string;
-  3: string;
-  4: string;
-  5: string;
+  [idx: number]: {
+    letter: string;
+    status: TLetterStatus;
+  };
 };
