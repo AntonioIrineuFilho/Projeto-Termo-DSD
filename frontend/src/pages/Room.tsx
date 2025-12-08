@@ -63,7 +63,7 @@ export default function Room() {
 
   const [status, setStatus] = useState<"waiting" | "playing">("waiting");
   const [turn, setTurn] = useState<string>("");
-
+  const [players, setPlayers] = useState<string[]>([]);
   const [winner, setWinner] = useState<string>("");
 
   interface IKeyboard {
@@ -109,8 +109,7 @@ export default function Room() {
     if (!roomCode || !name) return;
 
     const ws = new WebSocket(
-      import.meta.env.VITE_WS_URL +
-        `?roomCode=${roomCode}&playerName=${encodeURIComponent(name)}`
+      import.meta.env.VITE_WS_URL + `?roomCode=${roomCode}&playerName=${name}`
     );
 
     wsRef.current = ws;
@@ -122,6 +121,8 @@ export default function Room() {
         case "startGame":
           setStatus("playing");
           setTurn(data.turn);
+          setPlayers(data.players);
+          console.log(data.players);
           break;
         case "joined":
           toaster.push(
@@ -165,6 +166,21 @@ export default function Room() {
             await exitRoom();
             wsRef.current?.close();
           })();
+          break;
+        case "playerLeft":
+          toaster.push(
+            <Message showIcon type="info">
+              O jogador {data.playerName} saiu da sala. Partida cancelada e sala
+              sendo fechada...
+            </Message>,
+            {
+              placement: "topCenter",
+              duration: 5000,
+            }
+          );
+          setTimeout(() => {
+            handleReturnHome();
+          }, 5000);
           break;
         case "tryResult": {
           const lettersRes: {
@@ -222,6 +238,29 @@ export default function Room() {
           setTurn(data.nextTurnPlayer);
           break;
         }
+        case "invalidWord":
+          toaster.push(
+            <Message showIcon type="warning">
+              Palavra inválida! Tente novamente.
+            </Message>,
+            {
+              placement: "topCenter",
+              duration: 3000,
+            }
+          );
+          break;
+        default:
+          toaster.push(
+            <Message showIcon type="error">
+              Erro desconhecido ao processar mensagem do servidor! Tente
+              novamente.
+            </Message>,
+            {
+              placement: "topCenter",
+              duration: 5000,
+            }
+          );
+          break;
       }
     });
 
@@ -303,9 +342,14 @@ export default function Room() {
   };
 
   const handleReturnHome = async () => {
-    await exitRoom();
-    wsRef.current?.close();
-    window.location.href = "/";
+    try {
+      await exitRoom();
+    } catch {
+      /* */
+    } finally {
+      wsRef.current?.close();
+      window.location.href = "/";
+    }
   };
 
   if (status === "waiting") {
@@ -325,7 +369,15 @@ export default function Room() {
             Sala <b>#{id}</b>
           </p>
 
-          <div></div>
+          <div>
+            <ol>
+              {players.map((player) => (
+                <li key={player} className="text-center">
+                  {player}
+                </li>
+              ))}
+            </ol>
+          </div>
         </header>
 
         <main className="flex flex-col gap-20 items-center justify-center">
@@ -349,9 +401,16 @@ export default function Room() {
           <p>Sair</p>
         </Button>
 
-        <p className="text-xl">
-          Sala <b>#{id}</b>
-        </p>
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-xl">
+            Sala <b>#{id}</b>
+          </p>
+          <div className="flex gap-2 font-bold text-2xl">
+            <p>{players[0]}</p>
+            <p className="text-gray-500">VS</p>
+            <p>{players[1]}</p>
+          </div>
+        </div>
 
         <div></div>
       </header>
@@ -434,7 +493,7 @@ export default function Room() {
 
             <ol className="flex gap-2 xl:w-fit w-screen justify-center p-2">
               {Object.entries(keyboard)
-                .slice(11, 19)
+                .slice(10, 19)
                 .map(([key, { value, used }]) => (
                   <li key={key} className="w-full">
                     <KeyButton

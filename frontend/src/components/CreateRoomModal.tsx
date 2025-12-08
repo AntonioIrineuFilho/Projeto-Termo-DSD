@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, Form, Message, Modal, useToaster } from "rsuite";
 import { usePlayerContext } from "../context/PlayerContext";
+import { AxiosError } from "axios";
 
 export default function CreateRoomModal() {
   const toaster = useToaster();
@@ -27,8 +28,23 @@ export default function CreateRoomModal() {
   const handleSubmit = async () => {
     try {
       await createRoom(formValue.username, formValue.password);
-    } catch {
+    } catch (err) {
       handleClose();
+
+      if (err instanceof AxiosError) {
+        if (err.status === 400) {
+          toaster.push(
+            <Message showIcon type="error">
+              Nome de usuário é obrigatório
+            </Message>,
+            {
+              placement: "topCenter",
+              duration: 5000,
+            }
+          );
+          return;
+        }
+      }
 
       toaster.push(<Message type="error">Erro ao criar a sala</Message>, {
         placement: "topCenter",

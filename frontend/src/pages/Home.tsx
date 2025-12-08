@@ -1,12 +1,13 @@
 import { Input } from "rsuite";
 import RoomCard from "../components/RoomCard";
 import CreateRoomModal from "../components/CreateRoomModal";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { TRoom } from "../types/TRoom";
 import axios from "axios";
 
 export default function Home() {
   const [rooms, setRooms] = useState<TRoom[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -17,6 +18,16 @@ export default function Home() {
     };
 
     fetchRooms();
+
+    const ws = new WebSocket(import.meta.env.VITE_WS_LOBBY_URL);
+    wsRef.current = ws;
+
+    ws.addEventListener("message", (event) => {
+      const data = JSON.parse(event.data);
+      if (data) {
+        setRooms(data);
+      }
+    });
   }, []);
 
   return (
@@ -28,23 +39,24 @@ export default function Home() {
       <div className="px-5 flex gap-4 items-end">
         <label className="text-lg">
           Buscar Sala:
-          <Input type="search" width={513} />
+          <Input type="search" className={`xl:w-500 w-100`} />
         </label>
 
         <CreateRoomModal />
       </div>
 
       <main className="flex flex-wrap gap-8 px-5">
-        {rooms.map((room) => (
-          <div key={room.code}>
-            <RoomCard
-              isPrivate={room.type === "Privada"}
-              status={room.status}
-              players={room.players}
-              roomCode={room.code}
-            />
-          </div>
-        ))}
+        {rooms &&
+          rooms.map((room) => (
+            <div key={room.code}>
+              <RoomCard
+                isPrivate={room.type === "Privada"}
+                status={room.status}
+                players={room.players}
+                roomCode={room.code}
+              />
+            </div>
+          ))}
       </main>
     </div>
   );

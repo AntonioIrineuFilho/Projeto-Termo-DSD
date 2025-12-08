@@ -29,13 +29,13 @@ wss.on("connection", (ws: IPlayerWebSocket, req) => {
 
   gameWsHandler.onConnect({ playerName: playerName!, roomCode: roomCode!, ws });
 
-  ws.on("message", (msg) => {
+  ws.on("message", async (msg) => {
     const data = JSON.parse(msg.toString());
 
     switch (data.type) {
       case "try":
         const word = (data.word as string).toUpperCase();
-        gameWsHandler.onTry({ word, ws });
+        await gameWsHandler.onTry({ word, ws });
         break;
     }
   });

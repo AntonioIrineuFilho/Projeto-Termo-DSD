@@ -52,6 +52,16 @@ export default function RoomCard({
               duration: 5000,
             }
           );
+        } else if (error.response?.status === 409) {
+          toaster.push(
+            <Message showIcon type="error">
+              Nome de usuário já está em uso na sala
+            </Message>,
+            {
+              placement: "topCenter",
+              duration: 5000,
+            }
+          );
         } else {
           toaster.push(
             <Message showIcon type="error">
