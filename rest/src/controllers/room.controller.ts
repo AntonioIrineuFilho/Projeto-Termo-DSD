@@ -103,6 +103,8 @@ class RoomController {
   }
 
   async getAllRooms(req: Request, res: Response) {
+    const { search } = req.query;
+
     const keys = await redis.keys("room:*");
     const rooms: IRoom[] = [];
 
@@ -113,7 +115,13 @@ class RoomController {
 
         const { password, ...roomWithoutPassword } = room;
 
-        rooms.push(roomWithoutPassword);
+        if (search) {
+          if (room.code.includes(String(search))) {
+            rooms.push(roomWithoutPassword);
+          }
+        } else {
+          rooms.push(roomWithoutPassword);
+        }
       }
     }
 

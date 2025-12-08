@@ -7,6 +7,7 @@ import axios from "axios";
 
 export default function Home() {
   const [rooms, setRooms] = useState<TRoom[]>([]);
+  const [search, setSearch] = useState<string>("");
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -30,6 +31,26 @@ export default function Home() {
     });
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const fetchRooms = async () => {
+        const res = await axios.get<TRoom[]>(
+          `${import.meta.env.VITE_API_URL}/rooms`,
+          {
+            params: {
+              search,
+            },
+          }
+        );
+        setRooms(res.data);
+      };
+
+      fetchRooms();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
   return (
     <div className="h-full flex flex-col gap-4">
       <header className="bg-slate-100 p-6 border-b-[#cacaca7c] border-b-2">
@@ -39,13 +60,20 @@ export default function Home() {
       <div className="px-5 flex gap-4 items-end">
         <label className="text-lg">
           Buscar Sala:
-          <Input type="search" className={`xl:w-500 w-100`} />
+          <div className="w-full md:w-[513px]">
+            <Input
+              type="search"
+              value={search}
+              onChange={setSearch}
+              style={{ width: "100%" }}
+            />
+          </div>
         </label>
 
         <CreateRoomModal />
       </div>
 
-      <main className="flex flex-wrap gap-8 px-5">
+      <main className="flex xl:flex-row flex-col flex-wrap gap-8 px-5">
         {rooms &&
           rooms.map((room) => (
             <div key={room.code}>
