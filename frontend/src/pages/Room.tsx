@@ -151,7 +151,7 @@ export default function Room() {
             const winLetters = data.word.split("");
 
             const refinedWinLetters: TLetters = winLetters.reduce(
-              (acc, letter, index) => {
+              (acc: TLetters, letter: string, index: number) => {
                 acc[index + 1] = {
                   letter: letter,
                   status: "CORRECT",
@@ -269,6 +269,7 @@ export default function Room() {
     return () => {
       ws.close();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode, name, toaster]);
 
   const handleChangeLetter = (position: number, letter: string) => {

@@ -74,9 +74,7 @@ export function PlayerProvider({ children }: IPlayerProviderProps) {
   };
 
   const exitRoom = async () => {
-    const res = await axios.delete(
-      `${import.meta.env.VITE_API_URL}/room/${roomCode}`
-    );
+    await axios.delete(`${import.meta.env.VITE_API_URL}/room/${roomCode}`);
     reset();
   };
 

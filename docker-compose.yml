@@ -2,11 +2,16 @@ services:
   rabbitmq:
     image: "rabbitmq:3-management"
     ports:
-      - "5672:5672" # Porta padrão do RabbitMQ
-      - "15672:15672" # Porta para o Management UI
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: "admin"
       RABBITMQ_DEFAULT_PASS: "admin"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - default
 
@@ -21,8 +26,12 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - rabbitmq
-      - redis
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    env_file:
+      - .env
     networks:
       - default
 
@@ -31,13 +40,36 @@ services:
     ports:
       - "3001:3001"
     depends_on:
-      - rabbitmq
-      - redis
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    env_file:
+      - .env
+    networks:
+      - default
+
+  websocket-lobby:
+    build: ./websocket-lobby
+    ports:
+      - "3002:3002"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    env_file:
+      - .env
     networks:
       - default
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_WS_URL: ${VITE_WS_URL}
+        VITE_WS_LOBBY_URL: ${VITE_WS_LOBBY_URL}
     ports:
       - "4173:4173"
     depends_on:
@@ -45,6 +77,9 @@ services:
       - redis
       - rest
       - websocket
+      - websocket-lobby
+    env_file:
+      - .env
     networks:
       - default
 

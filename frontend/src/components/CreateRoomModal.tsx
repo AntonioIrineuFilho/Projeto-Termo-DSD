@@ -64,7 +64,13 @@ export default function CreateRoomModal() {
           <Modal.Title>Criar Sala</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form fluid onChange={setFormValue} formValue={formValue}>
+          <Form
+            fluid
+            onChange={(formValue: Record<string, string>) =>
+              setFormValue(formValue as { username: string; password: string })
+            }
+            formValue={formValue}
+          >
             <Form.Group controlId="username">
               <Form.Label>Nome de usuário</Form.Label>
               <Form.Control name="username" type="text" />
